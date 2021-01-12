@@ -1,2 +1,2 @@
 # Project2-Group6
-Fun with Twitter and Spark
+Fun with Spark using Twitter
