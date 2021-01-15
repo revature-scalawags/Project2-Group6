@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object TweetsTrending {
   def main(args: Array[String]) {
-    val streamer = new TweetStreamRunner
+    val streamer = TweetStreamRunner()
 
     Future {
       streamer.streamToDirectory()
@@ -22,7 +22,7 @@ object TweetsTrending {
     val streamDF = spark.readStream.schema(staticDF.schema).json("twitterstream")
 
     val textQuery = streamDF.select($"data.text").writeStream.outputMode("append").format("console").start()
-    println("Loading Twitter Stream...")
+    println("Capturing Twitter Stream...")
     textQuery.awaitTermination(60000)
   }
 }
