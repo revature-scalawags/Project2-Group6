@@ -24,7 +24,7 @@ case class TweetStreamRunner(entity: HttpEntity) {
           fileWriter.close()
           Files.move(
             Paths.get("tweetstream.tmp"),
-            Paths.get(s"twitterstream/tweetstream-$milliseconds-${lineNumber/linesPerFile}")
+            Paths.get(s"data/twitterstream/tweetstream-$milliseconds-${lineNumber/linesPerFile}")
           )
           fileWriter = new PrintWriter(Paths.get("tweetstream.tmp").toFile)
         }

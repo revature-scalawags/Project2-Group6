@@ -23,7 +23,7 @@ object TweetsTrending {
     spark.sparkContext.setLogLevel("WARN")
 
     val staticDF = spark.read.json("tweetstream.tmp")
-    val streamDF = spark.readStream.schema(staticDF.schema).json("twitterstream")
+    val streamDF = spark.readStream.schema(staticDF.schema).json("data/twitterstream")
     streamDF.printSchema()
 
 
