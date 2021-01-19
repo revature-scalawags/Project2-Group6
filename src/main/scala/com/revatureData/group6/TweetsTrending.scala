@@ -1,10 +1,16 @@
 package com.revatureData.group6
 
 import org.apache.spark.sql.SparkSession
-import scala.concurrent.Future
+import org.apache.spark.sql.functions._
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+
 
 object TweetsTrending {
+  case class Tweet(id: Long, text: String)
+
   def main(args: Array[String]) {
     val streamer = TweetStreamRunner()
 
@@ -20,9 +26,21 @@ object TweetsTrending {
 
     val staticDF = spark.read.json("tweetstream.tmp")
     val streamDF = spark.readStream.schema(staticDF.schema).json("twitterstream")
+    streamDF.printSchema()
 
-    val textQuery = streamDF.select($"data.text").writeStream.outputMode("append").format("console").start()
+
+    val words = streamDF.select(split(col("data.text"), "\\s+")
+      .as("words_array"))
+      .drop("data.text")
+      .withColumn("hashtag", explode($"words_array"))
+    val hashtags = words.filter(words("hashtag").startsWith("#"))
+      .groupBy("hashtag")
+      .count()
+      .sort($"count".desc)
+
     println("Capturing Twitter Stream...")
-    textQuery.awaitTermination(60000)
+    hashtags.writeStream.outputMode("complete").format("console").start().awaitTermination(60000)
+
+    spark.stop()
   }
 }
