@@ -7,9 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
-
 object TweetsTrending {
-  case class Tweet(id: Long, text: String)
 
   def main(args: Array[String]) {
     val streamer = TweetStreamRunner()
