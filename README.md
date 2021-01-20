@@ -13,3 +13,7 @@ Spark AWS Application that inputs stream of twitter data and provides analysis b
 ## Features
 1. TrendingNegativity - Given a list of keywords, outputs a list counting the use of negative words in a stream
 
+2. MostLikes - GIven a stream, outputs the user and tweet with the most likes 
+
+3. NegativeScore - Calculate a score of a user based on the quality of their tweet
+
