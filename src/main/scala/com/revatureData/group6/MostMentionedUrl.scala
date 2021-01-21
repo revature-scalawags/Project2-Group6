@@ -22,7 +22,6 @@ object MostNotedUrl {
         val spark = SparkSession
             .builder
             .appName(name="MostNotedUrl")
-            .master(master="local[*]")
             .getOrCreate()
 
         import spark.implicits._
@@ -37,8 +36,8 @@ object MostNotedUrl {
         
         val links = urlDF.filter($"url" rlike "(http)" )
         val linkCounts = links.groupBy(col1="url").count()
-        val linkCountsSorted = linkCounts.sort("count")
-        linkCountsSorted.show(linkCountsSorted.count.toInt)
+        val linkCountsSorted = linkCounts.sort("count").orderBy(col("count").desc)
+        linkCountsSorted.show(linkCountsSorted.count.toInt,false)
         
 
     }   
