@@ -56,9 +56,9 @@ object TrendingNegativity {
       .sort($"count".desc)
 
     println("Capturing Twitter Stream...")
-    badWordCount.writeStream.outputMode("complete").format("console").start().awaitTermination(60000)
+    badWordCount.writeStream.outputMode("complete").format("console").start().awaitTermination(3600000)
 
     badWordCount.printSchema()
-    spark.close()
+    spark.stop()
   }
 }

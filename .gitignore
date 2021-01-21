@@ -197,3 +197,4 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/scala,sbt,metals,intellij,vscode,macos,windows,bloop
 tweetstream.tmp
 data/twitterstream/*
+data/user-data.csv
