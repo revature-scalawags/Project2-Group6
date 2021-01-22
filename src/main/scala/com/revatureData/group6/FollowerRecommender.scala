@@ -1,9 +1,7 @@
 package com.revatureData.group6
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.types.{ArrayType, DoubleType, IntegerType, LongType, StringType, StructType}
-import org.apache.spark.sql.functions.{col, concat, explode, regexp_replace, split}
+import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 import scala.annotation.tailrec
@@ -19,7 +17,7 @@ object FollowerRecommender {
   @tailrec
     def concatenateTailrec(aString: Seq[String], n: Int, accumulator: String): String =
     if (n < 9 || n >= aString.length) accumulator
-    else concatenateTailrec(aString, n-1, accumulator + aString(n).concat("|"))
+    else concatenateTailrec(aString, n-1, accumulator + aString(n) + '|')
 
   def getUserDS(df: DataFrame, spark: SparkSession): Dataset[UsersSet] = {
     import spark.implicits._
@@ -30,7 +28,7 @@ object FollowerRecommender {
   }
 
   def formatFriendsDS: MutableList[FriendsSet] = {
-    val (ab, pattern) = (MutableList[FriendsSet](), """/[\[\]"]+/g""".r)
+    val (ml, pattern) = (MutableList[FriendsSet](), """/[\[\]"]+/g""".r)
     val lines = Source.fromFile("data/user-data.csv")
 
     for (line <- lines.getLines()) {
@@ -42,14 +40,14 @@ object FollowerRecommender {
         pattern.replaceAllIn(friendList, "")
 
         val fs = FriendsSet(fields(0), fields(1), friendList)
-        ab.+=(fs)
+        ml+=(fs)
         }
     }
-    ab
+    ml
   }
 
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
+//    Logger.getLogger("org").setLevel(Level.ERROR)
 
     if (args.length != 1) {
       println("You must pass in one argument parameter as a single Twitter username.")
@@ -87,26 +85,5 @@ object FollowerRecommender {
 
     val friendTable = friendsDS.select("id", "screenName", "friends")
     friendTable.show(20)
-
-//    val withFriends = friendsDS
-//      .select(split(col("value.friends"), "|")
-//      .as("friendsArr"))
-//      .drop("friends")
-//      withFriends.show()
-//      .withColumn("friendsArr", split(col("scrubbedFriends"), ","))
-//      .drop("scrubbedFriends")
-//    reformattedFriendsDS.printSchema()
-
-//    usersWithFriends.printSchema()
-//    val user = reformattedDS.filter($"screenName" === args(0))
-//    val usrFollowingList = user
-//      .withColumn("usrFollowing", explode($"friendsArr"))
-//      .drop("friendsArr")
-//    val allUsrFollowingList = reformattedDS
-//      .filter($"id" =!=  "user.id")
-//      .withColumn("usrFollowing", explode($"friendsArr"))
-//      .drop("friendsArr")
-//    user.show()
-//    usrFollowingList.printSchema()
   }
 }
