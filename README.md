@@ -5,9 +5,9 @@
 ## Questions
 1.What information can be found regarding trending tweets based on the number of likes?
 
-2.Which companies twitter accounts have more positive tweets/retweets than negative ones? What is the insight gained?
+2.Which url is the most referenced in a given stream?
 
-3.How can we compare tweets based on a negativity score that searches for key words?
+3.Can we find out which tweets contain negative language?
 
 ## Technologies 
 1. Amazon Web Service 
