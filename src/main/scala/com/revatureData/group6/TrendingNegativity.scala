@@ -1,5 +1,6 @@
 package com.revatureData.group6
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{broadcast, col, explode, split}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
@@ -12,13 +13,15 @@ object TrendingNegativity {
   case class BadWords(id: Int, word: String)
 
   def main(args: Array[String]): Unit = {
+    Logger.getLogger("org").setLevel(Level.ERROR)
     val streamer = TweetStreamRunner()
 
     Future {
       streamer.streamToDirectory()
     }
 
-    val spark = SparkSession.builder()
+    val spark = SparkSession
+      .builder
       .appName("TweetsTrending")
       .master("local[*]")
       .getOrCreate()
