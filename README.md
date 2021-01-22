@@ -22,7 +22,7 @@
 
 2. MostMentionedUrl - Given a stream, outputs the url with the most mentions
 
-3. NegativeScore - Calculate a score of a user based on the quality of their tweet
+3. TrendingTweets - Given a stream, outputs a dataset of the most trending tweets based on the number of likes
 
 
 ###  By David Masterson, Page Tyler, Zeshawn Manzoor and Nick Rau 
