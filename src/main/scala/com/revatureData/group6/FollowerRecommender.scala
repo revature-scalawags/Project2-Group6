@@ -1,23 +1,32 @@
 package com.revatureData.group6
 
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.functions.{col, regexp_replace, split}
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import scala.annotation.tailrec
 
-import scala.collection.mutable.MutableList
-import scala.io.Source
-
-object FollowerRecommender {
+object FollowerRecommender extends Serializable {
 
   case class UsersSet(id: String, screenName: String, followersCount: Int = 0, friendsCount: Int = 0)
-  case class FriendsSet(id: String, screenName: String, friends: String)
+  case class FriendsSet(id: String, friendString: String)
 
   @tailrec
-    def concatenateTailrec(aString: Seq[String], n: Int, accumulator: String): String =
-    if (n < 9 || n >= aString.length) accumulator
+  def concatenateTailrec(aString: Seq[String], n: Int, accumulator: String): String =
+    if (n < 0 || n >= aString.length) accumulator
     else concatenateTailrec(aString, n-1, accumulator + aString(n) + '|')
+
+  def prepareFriendsDF(row: String): (String, String) = {
+    val fields = row.split(",").map(_.trim)
+    val friendsArray = for {
+                (x,i) <- fields.zipWithIndex
+                if i >= 8
+              } yield x
+    val friendsList = concatenateTailrec(friendsArray, friendsArray.length -1, "")
+
+    (fields(0), friendsList)
+  }
 
   def getUserDS(df: DataFrame, spark: SparkSession): Dataset[UsersSet] = {
     import spark.implicits._
@@ -27,27 +36,9 @@ object FollowerRecommender {
     filteredDF.as[UsersSet]
   }
 
-  def formatFriendsDS: MutableList[FriendsSet] = {
-    val (ml, pattern) = (MutableList[FriendsSet](), """/[\[\]"]+/g""".r)
-    val lines = Source.fromFile("data/user-data.csv")
-
-    for (line <- lines.getLines()) {
-      val fields = line.split(',').map(_.trim)
-      if (fields.length > 1) {
-
-        fields.drop(1)
-        val friendList = concatenateTailrec(fields, fields.length -1, "")
-        pattern.replaceAllIn(friendList, "")
-
-        val fs = FriendsSet(fields(0), fields(1), friendList)
-        ml+=(fs)
-        }
-    }
-    ml
-  }
 
   def main(args: Array[String]): Unit = {
-//    Logger.getLogger("org").setLevel(Level.ERROR)
+    Logger.getLogger("org").setLevel(Level.INFO)
 
     if (args.length != 1) {
       println("You must pass in one argument parameter as a single Twitter username.")
@@ -77,13 +68,35 @@ object FollowerRecommender {
       .schema(userSchema)
       .csv("data/user-data.csv")
 
-    val friendList = formatFriendsDS
-    val friendsDS = friendList.toDS()
-      friendsDS.printSchema()
     val userDS = getUserDS(userDF, spark)
-    userDS.printSchema()
 
-    val friendTable = friendsDS.select("id", "screenName", "friends")
-    friendTable.show(20)
+    val friendsRDD = spark.read
+      .option("header", "true")
+      .textFile("data/user-data.csv").rdd
+
+    val header = friendsRDD.first()
+    val rdd = friendsRDD.filter(row => row != header)
+    val friendsDF = rdd.map(prepareFriendsDF).toDF("id", "friendString")
+
+    val friendsDS = friendsDF.as[FriendsSet]
+
+    val scrubbedFriendsDF = friendsDS
+      .withColumn("cleanedFriends", regexp_replace(friendsDS("friendString"), "[\\[\\]\"\\s+]", ""))
+      .drop("friendString")
+
+    val withFriendsArr = scrubbedFriendsDF.select($"id", split(col("cleanedFriends"), "\\|")
+        .as("friendsArr"))
+        .drop("cleanedFriends")
+        .show(20)
+
+
+//    val friendsDS = friendList.toDS()
+//      friendsDS.printSchema()
+//    val userDS = getUserDS(userDF, spark)
+//    userDS.printSchema()
+//
+//    val friendTable = friendsDS.select("id", "screenName", "friends")
+//    friendTable.show(20)
+    spark.stop()
   }
 }
