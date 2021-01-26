@@ -1,3 +1,4 @@
+
 package com.revatureData.group6
 
 
@@ -12,6 +13,8 @@ import org.apache.http.client.methods.HttpGet
 
 
 case class TweetStreamRunner(entity: HttpEntity) {
+
+  
 
   def streamToDirectory() {
     if (entity != null) {
