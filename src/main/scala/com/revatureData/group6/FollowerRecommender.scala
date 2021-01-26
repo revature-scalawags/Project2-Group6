@@ -1,9 +1,9 @@
 package com.revatureData.group6
 
-import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.functions.{col, regexp_replace, split}
+import org.apache.log4j.{Level, Logger, AppenderSkeleton}
+import org.apache.spark.sql.functions.{col, explode, regexp_replace, split}
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 import scala.annotation.tailrec
 
@@ -15,15 +15,15 @@ object FollowerRecommender extends Serializable {
   @tailrec
   def concatenateTailrec(aString: Seq[String], n: Int, accumulator: String): String =
     if (n < 0 || n >= aString.length) accumulator
-    else concatenateTailrec(aString, n-1, accumulator + aString(n) + '|')
+    else concatenateTailrec(aString, n - 1, accumulator + aString(n) + '|')
 
   def prepareFriendsDF(row: String): (String, String) = {
     val fields = row.split(",").map(_.trim)
     val friendsArray = for {
-                (x,i) <- fields.zipWithIndex
-                if i >= 8
-              } yield x
-    val friendsList = concatenateTailrec(friendsArray, friendsArray.length -1, "")
+      (x, i) <- fields.zipWithIndex
+      if i >= 8
+    } yield x
+    val friendsList = concatenateTailrec(friendsArray, friendsArray.length - 1, "")
 
     (fields(0), friendsList)
   }
@@ -31,7 +31,7 @@ object FollowerRecommender extends Serializable {
   def getUserDS(df: DataFrame, spark: SparkSession): Dataset[UsersSet] = {
     import spark.implicits._
     val colsToRemove = Seq("lang", "lastSeen", "tweetId", "tags", "friends")
-    val filteredDF = df.drop(colsToRemove:_*)
+    val filteredDF = df.drop(colsToRemove: _*)
 
     filteredDF.as[UsersSet]
   }
@@ -39,6 +39,8 @@ object FollowerRecommender extends Serializable {
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.INFO)
+    AppenderSkeleton
+
 
     if (args.length != 1) {
       println("You must pass in one argument parameter as a single Twitter username.")
@@ -68,7 +70,6 @@ object FollowerRecommender extends Serializable {
       .schema(userSchema)
       .csv("data/user-data.csv")
 
-    val userDS = getUserDS(userDF, spark)
 
     val friendsRDD = spark.read
       .option("header", "true")
@@ -78,6 +79,7 @@ object FollowerRecommender extends Serializable {
     val rdd = friendsRDD.filter(row => row != header)
     val friendsDF = rdd.map(prepareFriendsDF).toDF("id", "friendString")
 
+    val userDS = getUserDS(userDF, spark)
     val friendsDS = friendsDF.as[FriendsSet]
 
     val scrubbedFriendsDF = friendsDS
@@ -85,18 +87,35 @@ object FollowerRecommender extends Serializable {
       .drop("friendString")
 
     val withFriendsArr = scrubbedFriendsDF.select($"id", split(col("cleanedFriends"), "\\|")
-        .as("friendsArr"))
-        .drop("cleanedFriends")
-        .show(20)
+      .as("friendsArr"))
+      .drop("cleanedFriends")
 
+    val userFriendJoin = userDS.join(withFriendsArr, "id")
 
-//    val friendsDS = friendList.toDS()
-//      friendsDS.printSchema()
-//    val userDS = getUserDS(userDF, spark)
-//    userDS.printSchema()
-//
-//    val friendTable = friendsDS.select("id", "screenName", "friends")
-//    friendTable.show(20)
+    val twitterUser = userFriendJoin.filter($"screenName" === args(0))
+    val everyoneElse = userFriendJoin.filter($"screenName" =!= args(0))
+
+    if (twitterUser.take(1).isEmpty){
+      println(s"The Twitter screen name ${args(0)} was not found.\n Check spelling. This user may not exist in this dataset.")
+      System.exit(-1)
+    }
+
+    val withAllUserFriends = twitterUser.select("screenName", "friendsArr", "friendsCount")
+      .withColumn("friend", explode($"friendsArr"))
+      .drop("friendsArr")
+    val withAllOtherFriends = everyoneElse.select("id", "friendsArr")
+      .withColumn("friends", explode($"friendsArr"))
+      .drop("friendsArr")
+
+    withAllUserFriends.join(
+      withAllOtherFriends,
+      withAllUserFriends("friend") <=> withAllOtherFriends("friends")
+    )
+      .groupBy("id")
+      .count()
+      .sort($"count".desc)
+      .show(20)
+
     spark.stop()
   }
 }
