@@ -13,15 +13,14 @@ object TrendingNegativity {
   case class BadWords(id: Int, word: String)
 
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
     val streamer = TweetStreamRunner()
+    Logger.getLogger("org").setLevel(Level.ERROR)
 
     Future {
       streamer.streamToDirectory()
     }
 
-    val spark = SparkSession
-      .builder
+    val spark = SparkSession.builder
       .appName("TweetsTrending")
       .master("local[*]")
       .getOrCreate()

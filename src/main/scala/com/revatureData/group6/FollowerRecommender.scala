@@ -1,13 +1,14 @@
 package com.revatureData.group6
 
-import org.apache.log4j.{Level, Logger, AppenderSkeleton}
+import org.apache.log4j.{Level, Logger}
+import org.apache.logging.log4j.scala.Logging
 import org.apache.spark.sql.functions.{col, explode, regexp_replace, split}
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 import scala.annotation.tailrec
 
-object FollowerRecommender extends Serializable {
+object FollowerRecommender extends Serializable with Logging {
 
   case class UsersSet(id: String, screenName: String, followersCount: Int = 0, friendsCount: Int = 0)
   case class FriendsSet(id: String, friendString: String)
@@ -39,11 +40,13 @@ object FollowerRecommender extends Serializable {
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.INFO)
-    AppenderSkeleton
+
+
 
 
     if (args.length != 1) {
       println("You must pass in one argument parameter as a single Twitter username.")
+      logger.warn("no argument provided.")
       System.exit(-1)
     }
 
@@ -97,6 +100,7 @@ object FollowerRecommender extends Serializable {
 
     if (twitterUser.take(1).isEmpty){
       println(s"The Twitter screen name ${args(0)} was not found.\n Check spelling. This user may not exist in this dataset.")
+      logger.error("screen name not found.")
       System.exit(-1)
     }
 
