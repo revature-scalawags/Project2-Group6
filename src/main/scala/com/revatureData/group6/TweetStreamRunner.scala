@@ -22,7 +22,6 @@ case class TweetStreamRunner(entity: HttpEntity) {
       var fileWriter = new PrintWriter(Paths.get("tweetstream.tmp").toFile)
       var (lineNumber, line) = (1, reader.readLine())
       val (linesPerFile, milliseconds) = (1000, System.currentTimeMillis())
-println("line: ", line)
       while (line != null) {
         if (lineNumber % linesPerFile == 0) {
           fileWriter.close()

@@ -1,5 +1,6 @@
 package com.revatureData.group6
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{broadcast, col, explode, split}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
@@ -13,12 +14,13 @@ object TrendingNegativity {
 
   def main(args: Array[String]): Unit = {
     val streamer = TweetStreamRunner()
+    Logger.getLogger("org").setLevel(Level.ERROR)
 
     Future {
       streamer.streamToDirectory()
     }
 
-    val spark = SparkSession.builder()
+    val spark = SparkSession.builder
       .appName("TweetsTrending")
       .master("local[*]")
       .getOrCreate()
@@ -56,9 +58,9 @@ object TrendingNegativity {
       .sort($"count".desc)
 
     println("Capturing Twitter Stream...")
-    badWordCount.writeStream.outputMode("complete").format("console").start().awaitTermination(60000)
+    badWordCount.writeStream.outputMode("complete").format("console").start().awaitTermination(3600000)
 
     badWordCount.printSchema()
-    spark.close()
+    spark.stop()
   }
 }

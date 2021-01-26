@@ -1,5 +1,6 @@
 package com.revatureData.group6
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
@@ -10,6 +11,7 @@ import scala.concurrent.Future
 object TweetsTrending {
 
   def main(args: Array[String]) {
+    Logger.getLogger("org").setLevel(Level.ERROR)
     val streamer = TweetStreamRunner()
 
     Future {
@@ -20,7 +22,6 @@ object TweetsTrending {
       .master("local[*]")
       .getOrCreate()
     import spark.implicits._
-    spark.sparkContext.setLogLevel("WARN")
 
     val staticDF = spark.read.json("tweetstream.tmp")
     val streamDF = spark.readStream.schema(staticDF.schema).json("data/twitterstream")
