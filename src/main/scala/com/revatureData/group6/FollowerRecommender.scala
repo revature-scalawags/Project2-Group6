@@ -41,9 +41,6 @@ object FollowerRecommender extends Serializable with Logging {
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.INFO)
 
-
-
-
     if (args.length != 1) {
       println("You must pass in one argument parameter as a single Twitter username.")
       logger.warn("no argument provided.")
@@ -73,30 +70,28 @@ object FollowerRecommender extends Serializable with Logging {
       .schema(userSchema)
       .csv("data/user-data.csv")
 
-
     val friendsRDD = spark.read
       .option("header", "true")
       .textFile("data/user-data.csv").rdd
 
     val header = friendsRDD.first()
     val rdd = friendsRDD.filter(row => row != header)
-    val friendsDF = rdd.map(prepareFriendsDF).toDF("id", "friendString")
 
     val userDS = getUserDS(userDF, spark)
+    val friendsDF = rdd.map(prepareFriendsDF).toDF("id", "friendString")
     val friendsDS = friendsDF.as[FriendsSet]
 
-    val scrubbedFriendsDF = friendsDS
+    val reformattedFriendsDS = friendsDS
       .withColumn("cleanedFriends", regexp_replace(friendsDS("friendString"), "[\\[\\]\"\\s+]", ""))
       .drop("friendString")
-
-    val withFriendsArr = scrubbedFriendsDF.select($"id", split(col("cleanedFriends"), "\\|")
+      .select($"id", split(col("cleanedFriends"), "\\|")
       .as("friendsArr"))
       .drop("cleanedFriends")
 
-    val userFriendJoin = userDS.join(withFriendsArr, "id")
+    val userFriendsJoin = userDS.join(reformattedFriendsDS, "id")
 
-    val twitterUser = userFriendJoin.filter($"screenName" === args(0))
-    val everyoneElse = userFriendJoin.filter($"screenName" =!= args(0))
+    val twitterUser = userFriendsJoin.filter($"screenName" === args(0))
+    val everyoneElse = userFriendsJoin.filter($"screenName" =!= args(0))
 
     if (twitterUser.take(1).isEmpty){
       println(s"The Twitter screen name ${args(0)} was not found.\n Check spelling. This user may not exist in this dataset.")
