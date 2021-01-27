@@ -20,9 +20,10 @@
 ## Features
 1. TrendingNegativity - Given a list of keywords, outputs a list counting the use of negative words in a stream
 
-2. MostMentionedUrl - Given a stream, outputs the url with the most mentions
+2. TrendingTweets - Given a stream, outputs a dataset of the most trending tweets based on the number of likes
 
-3. TrendingTweets - Given a stream, outputs a dataset of the most trending tweets based on the number of likes
+3. MostMentionedUrl - Given a stream, outputs the url with the most mentions
 
+4. FollowerRecommender – Given a user, outputs their recommended followers 
 
 ###  By David Masterson, Page Tyler, Zeshawn Manzoor and Nick Rau 

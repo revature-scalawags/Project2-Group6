@@ -14,8 +14,6 @@ import org.apache.http.client.methods.HttpGet
 
 case class TweetStreamRunner(entity: HttpEntity) {
 
-  
-
   def streamToDirectory() {
     if (entity != null) {
       val reader = new BufferedReader(new InputStreamReader(entity.getContent))
