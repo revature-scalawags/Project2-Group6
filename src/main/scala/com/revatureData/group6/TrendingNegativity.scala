@@ -13,8 +13,8 @@ object TrendingNegativity {
   case class BadWords(id: Int, word: String)
 
   def main(args: Array[String]): Unit = {
-    val streamer = TweetStreamRunner()
     Logger.getLogger("org").setLevel(Level.ERROR)
+    val streamer = TweetStreamRunner()
 
     Future {
       streamer.streamToDirectory()

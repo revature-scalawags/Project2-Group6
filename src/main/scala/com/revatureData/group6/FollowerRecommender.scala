@@ -2,9 +2,9 @@ package com.revatureData.group6
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.logging.log4j.scala.Logging
-import org.apache.spark.sql.functions.{col, explode, regexp_replace, split}
+import org.apache.spark.sql.functions.{broadcast, col, explode, regexp_replace, split}
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
 import scala.annotation.tailrec
 
@@ -24,12 +24,12 @@ object FollowerRecommender extends Serializable with Logging {
       (x, i) <- fields.zipWithIndex
       if i >= 8
     } yield x
-    val friendsList = concatenateTailrec(friendsArray, friendsArray.length - 1, "")
+    val friendString = concatenateTailrec(friendsArray, friendsArray.length - 1, "")
 
-    (fields(0), friendsList)
+    (fields(0), friendString)
   }
 
-  def getUserDS(df: DataFrame, spark: SparkSession): Dataset[UsersSet] = {
+  def prepareUserDS(df: DataFrame, spark: SparkSession): Dataset[UsersSet] = {
     import spark.implicits._
     val colsToRemove = Seq("lang", "lastSeen", "tweetId", "tags", "friends")
     val filteredDF = df.drop(colsToRemove: _*)
@@ -37,12 +37,11 @@ object FollowerRecommender extends Serializable with Logging {
     filteredDF.as[UsersSet]
   }
 
-
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.INFO)
 
     if (args.length != 1) {
-      println("You must pass in one argument parameter as a single Twitter username.")
+      println("You must pass in one argument parameter as a single, Twitter user name.")
       logger.warn("no argument provided.")
       System.exit(-1)
     }
@@ -77,27 +76,21 @@ object FollowerRecommender extends Serializable with Logging {
     val header = friendsRDD.first()
     val rdd = friendsRDD.filter(row => row != header)
 
-    val userDS = getUserDS(userDF, spark)
     val friendsDF = rdd.map(prepareFriendsDF).toDF("id", "friendString")
     val friendsDS = friendsDF.as[FriendsSet]
+    val userDS = prepareUserDS(userDF, spark)
 
-    val reformattedFriendsDS = friendsDS
+    val formattedFriendsDS = friendsDS
       .withColumn("cleanedFriends", regexp_replace(friendsDS("friendString"), "[\\[\\]\"\\s+]", ""))
       .drop("friendString")
       .select($"id", split(col("cleanedFriends"), "\\|")
       .as("friendsArr"))
       .drop("cleanedFriends")
 
-    val userFriendsJoin = userDS.join(reformattedFriendsDS, "id")
+    val userFriendsJoin = userDS.join(formattedFriendsDS, "id")
 
     val twitterUser = userFriendsJoin.filter($"screenName" === args(0))
     val everyoneElse = userFriendsJoin.filter($"screenName" =!= args(0))
-
-    if (twitterUser.take(1).isEmpty){
-      println(s"The Twitter screen name ${args(0)} was not found.\n Check spelling. This user may not exist in this dataset.")
-      logger.error("screen name not found.")
-      System.exit(-1)
-    }
 
     val withAllUserFriends = twitterUser.select("screenName", "friendsArr", "friendsCount")
       .withColumn("friend", explode($"friendsArr"))
@@ -106,8 +99,8 @@ object FollowerRecommender extends Serializable with Logging {
       .withColumn("friends", explode($"friendsArr"))
       .drop("friendsArr")
 
-    withAllUserFriends.join(
-      withAllOtherFriends,
+    withAllOtherFriends.join(
+      withAllUserFriends,
       withAllUserFriends("friend") <=> withAllOtherFriends("friends")
     )
       .groupBy("id")
