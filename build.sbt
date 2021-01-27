@@ -2,7 +2,7 @@ name := "Project2-Group6"
 
 version := "1.0"
 organization := "com.revatureData.group6"
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.13"
 
 
 libraryDependencies ++= Seq(

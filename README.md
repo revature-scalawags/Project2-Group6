@@ -5,9 +5,9 @@
 ## Questions
 1.What information can be found regarding trending tweets based on the number of likes?
 
-2.Which companies twitter accounts have more positive tweets/retweets than negative ones? What is the insight gained?
+2.Which url is the most referenced in a given stream?
 
-3.How can we compare tweets based on a negativity score that searches for key words?
+3.Can we find out which tweets contain negative language?
 
 ## Technologies 
 1. Amazon Web Service 
@@ -20,9 +20,10 @@
 ## Features
 1. TrendingNegativity - Given a list of keywords, outputs a list counting the use of negative words in a stream
 
-2. MostMentionedUrl - Given a stream, outputs the url with the most mentions
+2. TrendingTweets - Given a stream, outputs a dataset of the most trending tweets based on the number of likes
 
-3. NegativeScore - Calculate a score of a user based on the quality of their tweet
+3. MostMentionedUrl - Given a stream, outputs the url with the most mentions
 
+4. FollowerRecommender – Given a user, outputs their recommended followers 
 
 ###  By David Masterson, Page Tyler, Zeshawn Manzoor and Nick Rau 
