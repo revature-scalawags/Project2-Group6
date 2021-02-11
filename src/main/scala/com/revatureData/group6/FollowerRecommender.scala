@@ -2,7 +2,7 @@ package com.revatureData.group6
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.logging.log4j.scala.Logging
-import org.apache.spark.sql.functions.{broadcast, col, explode, regexp_replace, split}
+import org.apache.spark.sql.functions.{col, explode, regexp_replace, split}
 import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
