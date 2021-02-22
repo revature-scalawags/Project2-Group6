@@ -1,0 +1,27 @@
+name,agg_gdp,agg_cases,infection_rate,cumulative_gdp
+Africa,12349,2543,0,25
+North America,3245,763,1,24
+South America,23552,6544,2,23
+Africa,12345,6532,3,22
+Australia,12345,5433,4,21
+Asia,1245,6543,5,20
+Asia,12345,6543,6,19
+Asia,6654,7732,7,18
+North America,4574,7254,8,17
+Africa,1649,2234,9,16
+North America,7645,7233,10,15
+South America,23456,6234,11,14
+Africa,12543,65234,12,13
+Australia,12345,6554,13,12
+Asia,7253,5432,14,11
+Asia,12345,4543,15,10
+Asia,644,232,16,9
+North America,374,7543,17,8
+North America,945,9033,18,7
+South America,356,6290,19,6
+Africa,1273,652,20,5
+Australia,1345,54,21,4
+Asia,7253,6577,22,3
+Asia,1545,4543,23,2
+Asia,64334,2432,24,1
+North America,3374,7543,25,0
